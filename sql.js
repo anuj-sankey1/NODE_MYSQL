@@ -31,7 +31,7 @@ var config = {
 var connection = new Connection(config);
 connection.on("connect", function(err) {
     if (err) {
-        console.log("Error in connnection: ", err);
+        console.log("Error in connnection:  ", err);
     } else {
         console.log("Connected");
         // console.log(executeStatement());
