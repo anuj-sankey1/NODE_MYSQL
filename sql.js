@@ -72,8 +72,6 @@ function executeStatement() {
             } else if (column.metadata.colName == "Model") {
                 obj.model = column.value;
             }
-
-
         });
         arr.push(obj);
         console.log(arr);
