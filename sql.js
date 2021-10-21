@@ -1,6 +1,83 @@
 var Connection = require("tedious").Connection;
-var express = require("express");
-var app = express();
+
+const express = require("express");
+const app = express();
+const port = 3000;
+
+const arr = ['abc'];
+
+app.get("/", (req, res) => {
+    res.end("Hello World!");
+});
+
+app.get("/products", (req, res) => {
+
+
+    request = new Request("SELECT * from Products;", function(err) {
+        if (err) {
+            console.log("Error", err);
+        } else {
+            console.log("Successful");
+        }
+    });
+
+    // ITEMID, PRODUCTNAME Vendor GROUPTYPE NAME Maintenance Color Model
+    var result = "";
+    request.on("row", function(columns) {
+        var obj = {};
+        // console.log(columns);
+        columns.forEach(function(column) {
+            if (column.metadata.colName == "ITEMID") {
+                obj.sku = column.value;
+            } else if (column.metadata.colName == "PRODUCTNAME") {
+                obj.productname = column.value;
+            } else if (column.metadata.colName == "Vendor") {
+                obj.vendor = column.value;
+            } else if (column.metadata.colName == "GROUPTYPE") {
+                obj.grouptype = column.value;
+            } else if (column.metadata.colName == "NAME") {
+                obj.name = column.value;
+            } else if (column.metadata.colName == "Maintenance") {
+                obj.maintenance = column.value;
+            } else if (column.metadata.colName == "Color") {
+                obj.color = column.value;
+            } else if (column.metadata.colName == "Model") {
+                obj.model = column.value;
+            }
+        });
+        arr.push(obj);
+        // console.log(arr);
+        result = "";
+    });
+
+    // arr.push(result);
+
+    request.on("done", function(rowCount, more) {
+        console.log(rowCount + " rows returned");
+    });
+
+    // Close the connection after the final event emitted by the request, after the callback passes
+    request.on("requestCompleted", function(rowCount, more) {
+        connection.close();
+    });
+
+    connection.execSql(request);
+
+
+
+
+
+
+
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.write(JSON.stringify(arr));
+    res.end();
+});
+
+app.listen(port, () => {
+    console.log(`app listening at http://localhost:${port}`);
+});
 
 var config = {
     server: "10.10.1.13",
@@ -37,59 +114,3 @@ var Request = require("tedious").Request;
 var TYPES = require("tedious").TYPES;
 
 //  SELECT ITEMID from Products p group By ITEMID;
-
-function executeStatement() {
-    const arr = [];
-
-    request = new Request("SELECT * from Products;", function(err) {
-        if (err) {
-            console.log("Error", err);
-        } else {
-            console.log("Successful");
-        }
-    });
-
-    // ITEMID, PRODUCTNAME Vendor GROUPTYPE NAME Maintenance Color Model
-    var result = "";
-    request.on("row", function(columns) {
-        var obj = {};
-        // console.log(columns);
-        columns.forEach(function(column) {
-            if (column.metadata.colName == "ITEMID") {
-                obj.sku = column.value;
-            } else if (column.metadata.colName == "PRODUCTNAME") {
-                obj.productname = column.value;
-            } else if (column.metadata.colName == "Vendor") {
-                obj.vendor = column.value;
-            } else if (column.metadata.colName == "GROUPTYPE") {
-                obj.grouptype = column.value;
-            } else if (column.metadata.colName == "NAME") {
-                obj.name = column.value;
-            } else if (column.metadata.colName == "Maintenance") {
-                obj.maintenance = column.value;
-            } else if (column.metadata.colName == "Color") {
-                obj.color = column.value;
-            } else if (column.metadata.colName == "Model") {
-                obj.model = column.value;
-            }
-        });
-        arr.push(obj);
-        console.log(arr);
-        result = "";
-    });
-
-    // arr.push(result);
-
-    request.on("done", function(rowCount, more) {
-        console.log(rowCount + " rows returned");
-    });
-
-    // Close the connection after the final event emitted by the request, after the callback passes
-    request.on("requestCompleted", function(rowCount, more) {
-        connection.close();
-    });
-
-    connection.execSql(request);
-
-    return arr;
-}
