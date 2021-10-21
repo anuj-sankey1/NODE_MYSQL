@@ -4,15 +4,57 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
-const arr = ['abc'];
+const arr = [];
 
-app.get("/", (req, res) => {
-    res.end("Hello World!");
+// Server credentials
+var config = {
+    server: "10.10.1.13",
+    authentication: {
+        type: "default",
+        options: {
+            userName: "Magento",
+            password: "Asd@123456",
+        },
+    },
+    options: {
+        // encrypt: false,  // Second solution to disable enforcement of TLS protocol
+        database: "almaneaDB",
+        // SQL Server does not support TLS 1.2, but it's required by default in Node.js 12
+        // So enforcing TLSv1
+        cryptoCredentialsDetails: {
+            minVersion: "TLSv1",
+        },
+    },
+};
+
+// Checking connection
+var connection = new Connection(config);
+connection.on("connect", function(err) {
+    if (err) {
+        console.log("Error in connnection: ", err);
+    } else {
+        console.log("Connected");
+        // console.log(executeStatement());
+    }
 });
 
+connection.connect();
+
+var Request = require("tedious").Request;
+var TYPES = require("tedious").TYPES;
+
+//Default route
+app.get("/", (req, res) => {
+    res.end("ERP Apis, /products");
+});
+
+//Port number
+app.listen(port, () => {
+    console.log(`app listening at http://localhost:${port}`);
+});
+
+//Product route
 app.get("/products", (req, res) => {
-
-
     request = new Request("SELECT * from Products;", function(err) {
         if (err) {
             console.log("Error", err);
@@ -50,8 +92,6 @@ app.get("/products", (req, res) => {
         result = "";
     });
 
-    // arr.push(result);
-
     request.on("done", function(rowCount, more) {
         console.log(rowCount + " rows returned");
     });
@@ -63,54 +103,7 @@ app.get("/products", (req, res) => {
 
     connection.execSql(request);
 
-
-
-
-
-
-
-
     res.writeHead(200, { "Content-Type": "application/json" });
     res.write(JSON.stringify(arr));
     res.end();
 });
-
-app.listen(port, () => {
-    console.log(`app listening at http://localhost:${port}`);
-});
-
-var config = {
-    server: "10.10.1.13",
-    authentication: {
-        type: "default",
-        options: {
-            userName: "Magento",
-            password: "Asd@123456",
-        },
-    },
-    options: {
-        // encrypt: false,  // Second solution to disable enforcement of TLS protocol
-        database: "almaneaDB",
-        // SQL Server does not support TLS 1.2, but it's required by default in Node.js 12
-        // So enforcing TLSv1
-        cryptoCredentialsDetails: {
-            minVersion: "TLSv1",
-        },
-    },
-};
-var connection = new Connection(config);
-connection.on("connect", function(err) {
-    if (err) {
-        console.log("Error in connnection: ", err);
-    } else {
-        console.log("Connected");
-        console.log(executeStatement());
-    }
-});
-
-connection.connect();
-
-var Request = require("tedious").Request;
-var TYPES = require("tedious").TYPES;
-
-//  SELECT ITEMID from Products p group By ITEMID;
