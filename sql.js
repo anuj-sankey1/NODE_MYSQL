@@ -1,23 +1,6 @@
-// let tedious = require('tedious');
-// let Connection = tedious.Connection;
-// var config = {
-//     userName: 'Magento',
-//     password: 'Asd@123456',
-//     server: '10.10.1.13',
-//     options: {
-//         database: 'almaneaDB'
-//     }
-// }
-
-// function handleConnection(err) {
-//     if (err) console.error("error connecting :-(", err);
-//     else console.log("successfully connected!!")
-// }
-// let connection = new Connection(config);
-// console.log("Connection", connection);
-// connection.on('connect', handleConnection);
-
 var Connection = require("tedious").Connection;
+var express = require("express");
+var app = express();
 
 var config = {
     server: "10.10.1.13",
@@ -44,10 +27,8 @@ connection.on("connect", function(err) {
         console.log("Error in connnection: ", err);
     } else {
         console.log("Connected");
-        executeStatement();
+        console.log(executeStatement());
     }
-
-    // If no error, then good to proceed.
 });
 
 connection.connect();
@@ -58,28 +39,48 @@ var TYPES = require("tedious").TYPES;
 //  SELECT ITEMID from Products p group By ITEMID;
 
 function executeStatement() {
-    request = new Request(
-        "SELECT * from Products;",
-        function(err) {
-            if (err) {
-                console.log("Error", err);
-            } else {
-                console.log("Successful");
-            }
+    const arr = [];
+
+    request = new Request("SELECT * from Products;", function(err) {
+        if (err) {
+            console.log("Error", err);
+        } else {
+            console.log("Successful");
         }
-    );
+    });
+
+    // ITEMID, PRODUCTNAME Vendor GROUPTYPE NAME Maintenance Color Model
     var result = "";
     request.on("row", function(columns) {
+        var obj = {};
+        // console.log(columns);
         columns.forEach(function(column) {
-            if (column.value === null) {
-                console.log("NULL");
-            } else {
-                result += column.value + " ";
+            if (column.metadata.colName == "ITEMID") {
+                obj.sku = column.value;
+            } else if (column.metadata.colName == "PRODUCTNAME") {
+                obj.productname = column.value;
+            } else if (column.metadata.colName == "Vendor") {
+                obj.vendor = column.value;
+            } else if (column.metadata.colName == "GROUPTYPE") {
+                obj.grouptype = column.value;
+            } else if (column.metadata.colName == "NAME") {
+                obj.name = column.value;
+            } else if (column.metadata.colName == "Maintenance") {
+                obj.maintenance = column.value;
+            } else if (column.metadata.colName == "Color") {
+                obj.color = column.value;
+            } else if (column.metadata.colName == "Model") {
+                obj.model = column.value;
             }
+
+
         });
-        console.log(result);
+        arr.push(obj);
+        console.log(arr);
         result = "";
     });
+
+    // arr.push(result);
 
     request.on("done", function(rowCount, more) {
         console.log(rowCount + " rows returned");
@@ -91,4 +92,6 @@ function executeStatement() {
     });
 
     connection.execSql(request);
+
+    return arr;
 }
